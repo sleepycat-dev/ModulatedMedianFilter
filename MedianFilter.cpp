@@ -20,6 +20,7 @@ void CMedianFilter::prepareForPlay()
 		delete [] m_pSampleArray;
 
 	m_pSampleArray = new float[m_nBufferSize + 1];
+	reset();
 }
 
 void CMedianFilter::doSwap(int nIndex1, int nIndex2)

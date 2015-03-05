@@ -12,6 +12,7 @@
 
 // base class
 #include "plugin.h"
+#include "MedianFilter.h"
 
 class CModMedFilt : public CPlugIn
 {
@@ -82,8 +83,8 @@ public:
 
 
 	// Add your code here: ----------------------------------------------------------- //
-
-
+	CMedianFilter m_LeftFilt;
+	CMedianFilter m_RightFilt;
 
 	// END OF USER CODE -------------------------------------------------------------- //
 
@@ -91,11 +92,14 @@ public:
 	// ADDED BY RACKAFX -- DO NOT EDIT THIS CODE!!! ----------------------------------- //
 	//  **--0x07FD--**
 
+	int m_nBufferSize;
 
 	// **--0x1A7F--**
 	// ------------------------------------------------------------------------------- //
 
 };
+
+
 
 
 

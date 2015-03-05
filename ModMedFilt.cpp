@@ -101,9 +101,10 @@ bool __stdcall CModMedFilt::initialize()
 bool __stdcall CModMedFilt::prepareForPlay()
 {
 	// Add your code here:
-
-
-
+	m_LeftFilt.setBufferSize(m_nBufferSize);
+	m_RightFilt.setBufferSize(m_nBufferSize);
+	m_LeftFilt.prepareForPlay();
+	m_RightFilt.prepareForPlay();
 	return true;
 }
 
@@ -125,15 +126,15 @@ bool __stdcall CModMedFilt::processAudioFrame(float* pInputBuffer, float* pOutpu
 	//
 	// Do LEFT (MONO) Channel; there is always at least one input/one output
 	// (INSERT Effect)
-	pOutputBuffer[0] = pInputBuffer[0];
 
+	m_LeftFilt.processAudio(pInputBuffer[0], pOutputBuffer[0]);
 	// Mono-In, Stereo-Out (AUX Effect)
 	if(uNumInputChannels == 1 && uNumOutputChannels == 2)
-		pOutputBuffer[1] = pInputBuffer[0];
+		pOutputBuffer[1] = pOutputBuffer[0];
 
 	// Stereo-In, Stereo-Out (INSERT Effect)
 	if(uNumInputChannels == 2 && uNumOutputChannels == 2)
-		pOutputBuffer[1] = pInputBuffer[1];
+		m_RightFilt.processAudio(pInputBuffer[1], pOutputBuffer[1]);
 
 
 	return true;
@@ -145,6 +146,7 @@ bool __stdcall CModMedFilt::processAudioFrame(float* pInputBuffer, float* pOutpu
 
 	Variable Name                    Index
 -----------------------------------------------
+	m_nBufferSize                     0
 
 	Assignable Buttons               Index
 -----------------------------------------------
@@ -173,6 +175,8 @@ bool __stdcall CModMedFilt::userInterfaceChange(int nControlIndex)
 	{
 		case 0:
 		{
+			m_LeftFilt.setBufferSize(m_nBufferSize);
+			m_RightFilt.setBufferSize(m_nBufferSize);
 			break;
 		}
 
@@ -372,6 +376,42 @@ bool __stdcall CModMedFilt::initUI()
 		return true;
 
 // **--0xDEA7--**
+
+	m_nBufferSize = 1;
+	CUICtrl* ui0 = new CUICtrl;
+	ui0->uControlType = FILTER_CONTROL_CONTINUOUSLY_VARIABLE;
+	ui0->uControlId = 0;
+	ui0->bLogSlider = false;
+	ui0->bExpSlider = false;
+	ui0->fUserDisplayDataLoLimit = 1.000000;
+	ui0->fUserDisplayDataHiLimit = 64.000000;
+	ui0->uUserDataType = intData;
+	ui0->fInitUserIntValue = 1.000000;
+	ui0->fInitUserFloatValue = 0;
+	ui0->fInitUserDoubleValue = 0;
+	ui0->fInitUserUINTValue = 0;
+	ui0->m_pUserCookedIntData = &m_nBufferSize;
+	ui0->m_pUserCookedFloatData = NULL;
+	ui0->m_pUserCookedDoubleData = NULL;
+	ui0->m_pUserCookedUINTData = NULL;
+	ui0->cControlUnits = "Units                                                           ";
+	ui0->cVariableName = "m_nBufferSize";
+	ui0->cEnumeratedList = "SEL1,SEL2,SEL3";
+	ui0->dPresetData[0] = 0.000000;ui0->dPresetData[1] = 0.000000;ui0->dPresetData[2] = 0.000000;ui0->dPresetData[3] = 0.000000;ui0->dPresetData[4] = 0.000000;ui0->dPresetData[5] = 0.000000;ui0->dPresetData[6] = 0.000000;ui0->dPresetData[7] = 0.000000;ui0->dPresetData[8] = 0.000000;ui0->dPresetData[9] = 0.000000;ui0->dPresetData[10] = 0.000000;ui0->dPresetData[11] = 0.000000;ui0->dPresetData[12] = 0.000000;ui0->dPresetData[13] = 0.000000;ui0->dPresetData[14] = 0.000000;ui0->dPresetData[15] = 0.000000;
+	ui0->cControlName = "Control Name";
+	ui0->bOwnerControl = false;
+	ui0->bMIDIControl = false;
+	ui0->uMIDIControlCommand = 176;
+	ui0->uMIDIControlName = 3;
+	ui0->uMIDIControlChannel = 0;
+	ui0->nGUIRow = -1;
+	ui0->nGUIColumn = -1;
+	ui0->uControlTheme[0] = 0; ui0->uControlTheme[1] = 0; ui0->uControlTheme[2] = 0; ui0->uControlTheme[3] = 0; ui0->uControlTheme[4] = 0; ui0->uControlTheme[5] = 0; ui0->uControlTheme[6] = 0; ui0->uControlTheme[7] = 0; ui0->uControlTheme[8] = 0; ui0->uControlTheme[9] = 0; ui0->uControlTheme[10] = 0; ui0->uControlTheme[11] = 0; ui0->uControlTheme[12] = 0; ui0->uControlTheme[13] = 0; ui0->uControlTheme[14] = 0; ui0->uControlTheme[15] = 0; ui0->uControlTheme[16] = 0; ui0->uControlTheme[17] = 0; ui0->uControlTheme[18] = 0; ui0->uControlTheme[19] = 0; ui0->uControlTheme[20] = 0; ui0->uControlTheme[21] = 0; ui0->uControlTheme[22] = 0; ui0->uControlTheme[23] = 0; ui0->uControlTheme[24] = 0; ui0->uControlTheme[25] = 0; ui0->uControlTheme[26] = 0; ui0->uControlTheme[27] = 1; ui0->uControlTheme[28] = 0; ui0->uControlTheme[29] = 0; ui0->uControlTheme[30] = 0; ui0->uControlTheme[31] = 0; 
+	ui0->uFluxCapControl[0] = 0; ui0->uFluxCapControl[1] = 0; ui0->uFluxCapControl[2] = 0; ui0->uFluxCapControl[3] = 0; ui0->uFluxCapControl[4] = 0; ui0->uFluxCapControl[5] = 0; ui0->uFluxCapControl[6] = 0; ui0->uFluxCapControl[7] = 0; ui0->uFluxCapControl[8] = 0; ui0->uFluxCapControl[9] = 0; ui0->uFluxCapControl[10] = 0; ui0->uFluxCapControl[11] = 0; ui0->uFluxCapControl[12] = 0; ui0->uFluxCapControl[13] = 0; ui0->uFluxCapControl[14] = 0; ui0->uFluxCapControl[15] = 0; ui0->uFluxCapControl[16] = 0; ui0->uFluxCapControl[17] = 0; ui0->uFluxCapControl[18] = 0; ui0->uFluxCapControl[19] = 0; ui0->uFluxCapControl[20] = 0; ui0->uFluxCapControl[21] = 0; ui0->uFluxCapControl[22] = 0; ui0->uFluxCapControl[23] = 0; ui0->uFluxCapControl[24] = 0; ui0->uFluxCapControl[25] = 0; ui0->uFluxCapControl[26] = 0; ui0->uFluxCapControl[27] = 0; ui0->uFluxCapControl[28] = 0; ui0->uFluxCapControl[29] = 0; ui0->uFluxCapControl[30] = 0; ui0->uFluxCapControl[31] = 0; ui0->uFluxCapControl[32] = 0; ui0->uFluxCapControl[33] = 0; ui0->uFluxCapControl[34] = 0; ui0->uFluxCapControl[35] = 0; ui0->uFluxCapControl[36] = 0; ui0->uFluxCapControl[37] = 0; ui0->uFluxCapControl[38] = 0; ui0->uFluxCapControl[39] = 0; ui0->uFluxCapControl[40] = 0; ui0->uFluxCapControl[41] = 0; ui0->uFluxCapControl[42] = 0; ui0->uFluxCapControl[43] = 0; ui0->uFluxCapControl[44] = 0; ui0->uFluxCapControl[45] = 0; ui0->uFluxCapControl[46] = 0; ui0->uFluxCapControl[47] = 0; ui0->uFluxCapControl[48] = 0; ui0->uFluxCapControl[49] = 0; ui0->uFluxCapControl[50] = 0; ui0->uFluxCapControl[51] = 0; ui0->uFluxCapControl[52] = 0; ui0->uFluxCapControl[53] = 0; ui0->uFluxCapControl[54] = 0; ui0->uFluxCapControl[55] = 0; ui0->uFluxCapControl[56] = 0; ui0->uFluxCapControl[57] = 0; ui0->uFluxCapControl[58] = 0; ui0->uFluxCapControl[59] = 0; ui0->uFluxCapControl[60] = 0; ui0->uFluxCapControl[61] = 0; ui0->uFluxCapControl[62] = 0; ui0->uFluxCapControl[63] = 0; 
+	ui0->fFluxCapData[0] = 0.000000; ui0->fFluxCapData[1] = 0.000000; ui0->fFluxCapData[2] = 0.000000; ui0->fFluxCapData[3] = 0.000000; ui0->fFluxCapData[4] = 0.000000; ui0->fFluxCapData[5] = 0.000000; ui0->fFluxCapData[6] = 0.000000; ui0->fFluxCapData[7] = 0.000000; ui0->fFluxCapData[8] = 0.000000; ui0->fFluxCapData[9] = 0.000000; ui0->fFluxCapData[10] = 0.000000; ui0->fFluxCapData[11] = 0.000000; ui0->fFluxCapData[12] = 0.000000; ui0->fFluxCapData[13] = 0.000000; ui0->fFluxCapData[14] = 0.000000; ui0->fFluxCapData[15] = 0.000000; ui0->fFluxCapData[16] = 0.000000; ui0->fFluxCapData[17] = 0.000000; ui0->fFluxCapData[18] = 0.000000; ui0->fFluxCapData[19] = 0.000000; ui0->fFluxCapData[20] = 0.000000; ui0->fFluxCapData[21] = 0.000000; ui0->fFluxCapData[22] = 0.000000; ui0->fFluxCapData[23] = 0.000000; ui0->fFluxCapData[24] = 0.000000; ui0->fFluxCapData[25] = 0.000000; ui0->fFluxCapData[26] = 0.000000; ui0->fFluxCapData[27] = 0.000000; ui0->fFluxCapData[28] = 0.000000; ui0->fFluxCapData[29] = 0.000000; ui0->fFluxCapData[30] = 0.000000; ui0->fFluxCapData[31] = 0.000000; ui0->fFluxCapData[32] = 0.000000; ui0->fFluxCapData[33] = 0.000000; ui0->fFluxCapData[34] = 0.000000; ui0->fFluxCapData[35] = 0.000000; ui0->fFluxCapData[36] = 0.000000; ui0->fFluxCapData[37] = 0.000000; ui0->fFluxCapData[38] = 0.000000; ui0->fFluxCapData[39] = 0.000000; ui0->fFluxCapData[40] = 0.000000; ui0->fFluxCapData[41] = 0.000000; ui0->fFluxCapData[42] = 0.000000; ui0->fFluxCapData[43] = 0.000000; ui0->fFluxCapData[44] = 0.000000; ui0->fFluxCapData[45] = 0.000000; ui0->fFluxCapData[46] = 0.000000; ui0->fFluxCapData[47] = 0.000000; ui0->fFluxCapData[48] = 0.000000; ui0->fFluxCapData[49] = 0.000000; ui0->fFluxCapData[50] = 0.000000; ui0->fFluxCapData[51] = 0.000000; ui0->fFluxCapData[52] = 0.000000; ui0->fFluxCapData[53] = 0.000000; ui0->fFluxCapData[54] = 0.000000; ui0->fFluxCapData[55] = 0.000000; ui0->fFluxCapData[56] = 0.000000; ui0->fFluxCapData[57] = 0.000000; ui0->fFluxCapData[58] = 0.000000; ui0->fFluxCapData[59] = 0.000000; ui0->fFluxCapData[60] = 0.000000; ui0->fFluxCapData[61] = 0.000000; ui0->fFluxCapData[62] = 0.000000; ui0->fFluxCapData[63] = 0.000000; 
+	m_UIControlList.append(*ui0);
+	delete ui0;
+
 
 	m_uX_TrackPadIndex = -1;
 	m_uY_TrackPadIndex = -1;
@@ -618,6 +658,10 @@ bool __stdcall CModMedFilt::initUI()
 	return true;
 
 }
+
+
+
+
 
 
 
