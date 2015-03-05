@@ -4,6 +4,7 @@ CMedianFilter::CMedianFilter(int nBufferSize)
 {
 	m_nBufferSize = nBufferSize;
 	m_nWriteIndex = 0;
+	m_fPrevOut = 0;
 	m_pSampleArray = new float[m_nBufferSize + 1];
 }
 
@@ -113,11 +114,14 @@ void CMedianFilter::processAudio(float & fIn, float & fOut)
 {
 	m_pSampleArray[m_nWriteIndex] = fIn;
 
-	fOut = getMedian();
+	float fMedian = getMedian();
+	//Interpolate between previous output and current output to reduce aliasing
+	fOut = dLinTerp(0, 1, fMedian, m_fPrevOut, (float)1.0/44100.0);
 
 	m_nWriteIndex++;
 	if(m_nWriteIndex > m_nBufferSize)
 		m_nWriteIndex = 0;	
+	m_fPrevOut = fOut;
 }
 
 void CMedianFilter::setBufferSize(int nBufferSize)

@@ -1,4 +1,5 @@
 #include <string.h>
+#include "pluginconstants.h"
 
 class CMedianFilter
 {
@@ -7,6 +8,8 @@ protected:
 	//read and write indexes
 	int m_nWriteIndex;
 	int m_nBufferSize;
+	//previous output for interpolation
+	float m_fPrevOut;
 	//array to hold samples to be sorted
 	float * m_pSampleArray;
 
