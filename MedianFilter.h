@@ -12,6 +12,9 @@ protected:
 	float m_fPrevOut;
 	//array to hold samples to be sorted
 	float * m_pSampleArray;
+	//Accept modulation?
+	bool m_bExtModulation;
+	bool m_bPolarity;
 
 	//functions
 	void reset();
@@ -21,11 +24,14 @@ protected:
 	int doPartition(int nLow,int nHigh);
 	float doSelectionAlgr(int nLeft,int nRight,int nMid);
 	float getMedian();
+	float getModMedian(float fModVal);
 
 public:
 	CMedianFilter(int nBufferSize = 5);
 	~CMedianFilter();
 	void prepareForPlay();
-	void processAudio(float & fInput, float & fOut);
+	void processAudio(float & fInput, float & fOut, float fModVal = 0.0);
 	void setBufferSize(int nBufferSize);
+	void setExtModulation(bool bExtMod);
+	void setPolarity(bool bPolarity);
 };
