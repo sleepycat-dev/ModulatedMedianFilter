@@ -83,9 +83,13 @@ public:
 
 
 	// Add your code here: ----------------------------------------------------------- //
+	//objects
 	CMedianFilter m_LeftFilt;
 	CMedianFilter m_RightFilt;
+	CWaveTable m_LFO;
 
+	//functions
+	void updateLFO();
 	// END OF USER CODE -------------------------------------------------------------- //
 
 
@@ -93,11 +97,33 @@ public:
 	//  **--0x07FD--**
 
 	int m_nBufferSize;
+	UINT m_uWaveform;
+	enum{sine,saw,tri,square};
+	float m_fLFORate;
+	UINT m_uModSource;
+	enum{LFO,SELF};
+	UINT m_uDoModulate;
+	enum{SWITCH_OFF,SWITCH_ON};
 
 	// **--0x1A7F--**
 	// ------------------------------------------------------------------------------- //
 
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

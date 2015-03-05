@@ -3,7 +3,10 @@
 CMedianFilter::CMedianFilter(int nBufferSize)
 {
 	m_nBufferSize = nBufferSize;
+	m_bExtModulation = false;
+	m_bPolarity = false;
 	m_nWriteIndex = 0;
+	m_fPrevOut = 0;
 	m_pSampleArray = new float[m_nBufferSize + 1];
 }
 
@@ -79,6 +82,32 @@ float CMedianFilter::getMedian()
 	return doSelectionAlgr(0, m_nBufferSize, m_nBufferSize/2);
 }
 
+float CMedianFilter::getModMedian(float fModVal)
+{
+	//safety check to make sure values are in
+	//valid range
+	if(fModVal > 1.0)
+		fModVal = 1.0;
+	else if(fModVal < -1.0)
+		fModVal = -1.0;
+
+	//unipolar case
+	if(!m_bPolarity)
+	{
+		int nIndex = (int)(fModVal*m_nBufferSize);
+		return m_pSampleArray[nIndex];
+	}
+	//bipolar case
+	else
+	{
+		//smallest value for fModVal is -1 so bias up by 1 to 
+		//adjust into usable range. Then divide by 2 to handle
+		//largest case (1 shifted up by 1 is 2, and so is invalid)
+		int nIndex = (int)(((fModVal+1)/2)*m_nBufferSize);
+		return m_pSampleArray[nIndex];
+	}
+}
+
 void CMedianFilter::resize(int nNewSize)
 {
 	//make array of new size, copy over contents, delete old array, copy over to pointer
@@ -109,15 +138,23 @@ void CMedianFilter::reset()
 	m_nWriteIndex = 0;
 }
 
-void CMedianFilter::processAudio(float & fIn, float & fOut)
+void CMedianFilter::processAudio(float & fIn, float & fOut, float fModVal)
 {
 	m_pSampleArray[m_nWriteIndex] = fIn;
+	float fMedian = 0.0;
 
-	fOut = getMedian();
+	if(m_bExtModulation)
+		fMedian = getModMedian(fModVal);
+	else
+		fMedian = getMedian();
+
+	//Interpolate between previous output and current output to reduce aliasing
+	fOut = dLinTerp(0, 1, fMedian, m_fPrevOut, (float)1.0/44100.0);
 
 	m_nWriteIndex++;
 	if(m_nWriteIndex > m_nBufferSize)
 		m_nWriteIndex = 0;	
+	m_fPrevOut = fOut;
 }
 
 void CMedianFilter::setBufferSize(int nBufferSize)
@@ -125,3 +162,9 @@ void CMedianFilter::setBufferSize(int nBufferSize)
 	resize(nBufferSize);
 	m_nBufferSize = nBufferSize;
 }
+
+void CMedianFilter::setExtModulation(bool bExtMod)
+{m_bExtModulation = bExtMod;}
+
+void CMedianFilter::setPolarity(bool bPolarity)
+{m_bPolarity = bPolarity;}
