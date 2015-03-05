@@ -1,5 +1,18 @@
 #include "MedianFilter.h"
 
+CMedianFilter::CMedianFilter(int nBufferSize)
+{
+	m_nBufferSize = nBufferSize;
+	m_nWriteIndex = 0;
+	m_pSampleArray = new float[m_nBufferSize + 1];
+}
+
+CMedianFilter::~CMedianFilter()
+{
+	if(m_pSampleArray)
+		delete [] m_pSampleArray;
+}
+
 void CMedianFilter::prepareForPlay()
 {
 	// Add your code here:
@@ -86,7 +99,6 @@ void CMedianFilter::resize(int nNewSize)
 		delete [] m_pSampleArray;
 	}
 	m_pSampleArray = fTemp;
-	m_nBufferSize = nNewSize;
 }
 
 void CMedianFilter::reset()
@@ -94,4 +106,21 @@ void CMedianFilter::reset()
 	if(m_pSampleArray)
 		memset(m_pSampleArray, 0, m_nBufferSize*sizeof(float));
 	m_nWriteIndex = 0;
+}
+
+void CMedianFilter::processAudio(float & fIn, float & fOut)
+{
+	m_pSampleArray[m_nWriteIndex] = fIn;
+
+	fOut = getMedian();
+
+	m_nWriteIndex++;
+	if(m_nWriteIndex > m_nBufferSize)
+		m_nWriteIndex = 0;	
+}
+
+void CMedianFilter::setBufferSize(int nBufferSize)
+{
+	resize(nBufferSize);
+	m_nBufferSize = nBufferSize;
 }

@@ -20,9 +20,9 @@ protected:
 	float getMedian();
 
 public:
-	CMedianFilter(int m_nBufferSize = 5);
+	CMedianFilter(int nBufferSize = 5);
 	~CMedianFilter();
 	void prepareForPlay();
-	void processAudio(float & fInput);
+	void processAudio(float & fInput, float & fOut);
 	void setBufferSize(int nBufferSize);
 };
