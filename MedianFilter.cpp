@@ -77,8 +77,8 @@ float CMedianFilter::doSelectionAlgr(int nLeft,int nRight,int nMid)
 float CMedianFilter::getMedian()
 {
 	//call selection algorithm http://discuss.codechef.com/questions/1489/find-median-in-an-unsorted-array-without-sorting-it
-	if(m_nReadLimit == 1)
-		return m_pSampleArray[0];
+	if(m_nReadLimit == 0 || m_nReadLimit == 1)
+		return m_pSampleArray[m_nReadLimit];
 
 	return doSelectionAlgr(0, m_nReadLimit, m_nReadLimit/2);
 }
@@ -120,7 +120,7 @@ int CMedianFilter::getModReadLimit(float fModVal)
 
 	//unipolar case
 	if(!m_bPolarity)
-		return (int)(fModVal*m_nBufferSize);
+		return (int)(fModVal*(m_nBufferSize-1));
 
 	//bipolar case
 	else
@@ -128,7 +128,7 @@ int CMedianFilter::getModReadLimit(float fModVal)
 		//smallest value for fModVal is -1 so bias up by 1 to 
 		//adjust into usable range. Then divide by 2 to handle
 		//largest case (1 shifted up by 1 is 2, and so is invalid)
-		return (int)(((fModVal+1.0)/2.0)*m_nBufferSize);
+		return (int)(((fModVal+1.0)/2.0)*(m_nBufferSize-1));
 	}
 }
 
@@ -188,7 +188,7 @@ void CMedianFilter::processAudio(float & fIn, float & fOut, float fModVal)
 
 void CMedianFilter::setBufferSize(int nBufferSize)
 {
-	resize(nBufferSize);
+	reset();
 	m_nBufferSize = nBufferSize;
 }
 
