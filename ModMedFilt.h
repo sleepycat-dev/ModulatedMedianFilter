@@ -14,7 +14,7 @@
 #include "plugin.h"
 #include "MedianFilter.h"
 
-#define MAXBUFFERSIZE 16
+#define MAXBUFFERSIZE 64
 
 class CModMedFilt : public CPlugIn
 {
@@ -128,6 +128,12 @@ public:
 	// ------------------------------------------------------------------------------- //
 
 };
+
+
+
+
+
+
 
 
 

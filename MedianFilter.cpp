@@ -95,7 +95,7 @@ float CMedianFilter::getModMedian(float fModVal)
 	//unipolar case
 	if(!m_bPolarity)
 	{
-		int nIndex = (int)(fModVal*m_nBufferSize);
+		int nIndex = (int)(fModVal*(m_nBufferSize-1));
 		return m_pSampleArray[nIndex];
 	}
 	//bipolar case
@@ -104,7 +104,7 @@ float CMedianFilter::getModMedian(float fModVal)
 		//smallest value for fModVal is -1 so bias up by 1 to 
 		//adjust into usable range. Then divide by 2 to handle
 		//largest case (1 shifted up by 1 is 2, and so is invalid)
-		int nIndex = (int)(((fModVal+1.0)/2.0)*m_nBufferSize);
+		int nIndex = (int)(((fModVal+1.0)/2.0)*(m_nBufferSize-1));
 		return m_pSampleArray[nIndex];
 	}
 }
