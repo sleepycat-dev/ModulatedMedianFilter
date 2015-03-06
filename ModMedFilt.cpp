@@ -111,8 +111,10 @@ bool __stdcall CModMedFilt::initialize()
 bool __stdcall CModMedFilt::prepareForPlay()
 {
 	//Filters
-	m_LeftFilt.setBufferSize(m_nBufferSizeLeft);
-	m_RightFilt.setBufferSize(m_nBufferSizeLeft);
+	m_LeftFilt.setBufferSize(MAXBUFFERSIZE);
+	m_RightFilt.setBufferSize(MAXBUFFERSIZE);
+	m_LeftFilt.setReadLimit(m_nBufferSizeLeft);
+	m_RightFilt.setReadLimit(m_nBufferSizeRight);
 	m_LeftFilt.prepareForPlay();
 	m_RightFilt.prepareForPlay();
 
@@ -220,6 +222,8 @@ bool __stdcall CModMedFilt::processAudioFrame(float* pInputBuffer, float* pOutpu
 	m_uModSourceLeft                  3
 	m_fMix                            4
 	m_fMixModRate                     5
+	m_uLeftLFODest                    6
+	m_uRightLFODest                   7
 	m_nBufferSizeRight                10
 	m_uWaveformRight                  11
 	m_fLFORateRight                   12
@@ -256,9 +260,9 @@ bool __stdcall CModMedFilt::userInterfaceChange(int nControlIndex)
 	{
 		case 0:
 		{
-			m_LeftFilt.setBufferSize(m_nBufferSizeLeft);
+			m_LeftFilt.setReadLimit(m_nBufferSizeLeft);
 			if(m_uStereoLink)
-				m_RightFilt.setBufferSize(m_nBufferSizeLeft);
+				m_RightFilt.setReadLimit(m_nBufferSizeLeft);
 			break;
 		}
 		case 1:
@@ -297,11 +301,33 @@ bool __stdcall CModMedFilt::userInterfaceChange(int nControlIndex)
 			updateLFO();
 			break;
 		}
+		case 6:
+		{
+			m_LeftFilt.setModDest(m_uLeftLFODest);
+			m_LeftFilt.setReadLimit(m_nBufferSizeLeft);
+			if(m_uStereoLink)
+			{
+				m_RightFilt.setModDest(m_uLeftLFODest);
+				m_RightFilt.setReadLimit(m_nBufferSizeLeft);
+			}
+			break;
+		}
+		case 7:
+		{
+			m_RightFilt.setModDest(m_uRightLFODest);
+			m_RightFilt.setReadLimit(m_nBufferSizeRight);
+			if(m_uStereoLink)
+			{
+				m_LeftFilt.setModDest(m_uRightLFODest);
+				m_LeftFilt.setReadLimit(m_nBufferSizeRight);
+			}
+			break;
+		}
 		case 10:
 		{
-			m_RightFilt.setBufferSize(m_nBufferSizeRight);
+			m_RightFilt.setReadLimit(m_nBufferSizeRight);
 			if(m_uStereoLink)
-				m_LeftFilt.setBufferSize(m_nBufferSizeRight);
+				m_LeftFilt.setReadLimit(m_nBufferSizeRight);
 			break;
 		}
 		case 11:
@@ -772,28 +798,28 @@ bool __stdcall CModMedFilt::initUI()
 	delete ui5;
 
 
-	m_nBufferSizeRight = 1;
+	m_uLeftLFODest = 0;
 	CUICtrl* ui6 = new CUICtrl;
 	ui6->uControlType = FILTER_CONTROL_CONTINUOUSLY_VARIABLE;
-	ui6->uControlId = 10;
+	ui6->uControlId = 6;
 	ui6->bLogSlider = false;
 	ui6->bExpSlider = false;
-	ui6->fUserDisplayDataLoLimit = 1.000000;
-	ui6->fUserDisplayDataHiLimit = 64.000000;
-	ui6->uUserDataType = intData;
-	ui6->fInitUserIntValue = 1.000000;
+	ui6->fUserDisplayDataLoLimit = 0.000000;
+	ui6->fUserDisplayDataHiLimit = 1.000000;
+	ui6->uUserDataType = UINTData;
+	ui6->fInitUserIntValue = 0;
 	ui6->fInitUserFloatValue = 0;
 	ui6->fInitUserDoubleValue = 0;
-	ui6->fInitUserUINTValue = 0;
-	ui6->m_pUserCookedIntData = &m_nBufferSizeRight;
+	ui6->fInitUserUINTValue = 0.000000;
+	ui6->m_pUserCookedIntData = NULL;
 	ui6->m_pUserCookedFloatData = NULL;
 	ui6->m_pUserCookedDoubleData = NULL;
-	ui6->m_pUserCookedUINTData = NULL;
-	ui6->cControlUnits = "                                                                ";
-	ui6->cVariableName = "m_nBufferSizeRight";
-	ui6->cEnumeratedList = "SEL1,SEL2,SEL3";
-	ui6->dPresetData[0] = 1.000000;ui6->dPresetData[1] = 0.000000;ui6->dPresetData[2] = 0.000000;ui6->dPresetData[3] = 0.000000;ui6->dPresetData[4] = 0.000000;ui6->dPresetData[5] = 0.000000;ui6->dPresetData[6] = 0.000000;ui6->dPresetData[7] = 0.000000;ui6->dPresetData[8] = 0.000000;ui6->dPresetData[9] = 0.000000;ui6->dPresetData[10] = 0.000000;ui6->dPresetData[11] = 0.000000;ui6->dPresetData[12] = 0.000000;ui6->dPresetData[13] = 0.000000;ui6->dPresetData[14] = 0.000000;ui6->dPresetData[15] = 0.000000;
-	ui6->cControlName = "Right Buffer Size";
+	ui6->m_pUserCookedUINTData = &m_uLeftLFODest;
+	ui6->cControlUnits = "Units                                                           ";
+	ui6->cVariableName = "m_uLeftLFODest";
+	ui6->cEnumeratedList = "read,size";
+	ui6->dPresetData[0] = 0.000000;ui6->dPresetData[1] = 0.000000;ui6->dPresetData[2] = 0.000000;ui6->dPresetData[3] = 0.000000;ui6->dPresetData[4] = 0.000000;ui6->dPresetData[5] = 0.000000;ui6->dPresetData[6] = 0.000000;ui6->dPresetData[7] = 0.000000;ui6->dPresetData[8] = 0.000000;ui6->dPresetData[9] = 0.000000;ui6->dPresetData[10] = 0.000000;ui6->dPresetData[11] = 0.000000;ui6->dPresetData[12] = 0.000000;ui6->dPresetData[13] = 0.000000;ui6->dPresetData[14] = 0.000000;ui6->dPresetData[15] = 0.000000;
+	ui6->cControlName = "Left LFO Dest";
 	ui6->bOwnerControl = false;
 	ui6->bMIDIControl = false;
 	ui6->uMIDIControlCommand = 176;
@@ -808,14 +834,14 @@ bool __stdcall CModMedFilt::initUI()
 	delete ui6;
 
 
-	m_uWaveformRight = 0;
+	m_uRightLFODest = 0;
 	CUICtrl* ui7 = new CUICtrl;
 	ui7->uControlType = FILTER_CONTROL_CONTINUOUSLY_VARIABLE;
-	ui7->uControlId = 11;
+	ui7->uControlId = 7;
 	ui7->bLogSlider = false;
 	ui7->bExpSlider = false;
 	ui7->fUserDisplayDataLoLimit = 0.000000;
-	ui7->fUserDisplayDataHiLimit = 3.000000;
+	ui7->fUserDisplayDataHiLimit = 1.000000;
 	ui7->uUserDataType = UINTData;
 	ui7->fInitUserIntValue = 0;
 	ui7->fInitUserFloatValue = 0;
@@ -824,12 +850,12 @@ bool __stdcall CModMedFilt::initUI()
 	ui7->m_pUserCookedIntData = NULL;
 	ui7->m_pUserCookedFloatData = NULL;
 	ui7->m_pUserCookedDoubleData = NULL;
-	ui7->m_pUserCookedUINTData = &m_uWaveformRight;
+	ui7->m_pUserCookedUINTData = &m_uRightLFODest;
 	ui7->cControlUnits = "                                                                ";
-	ui7->cVariableName = "m_uWaveformRight";
-	ui7->cEnumeratedList = "sine,saw,tri,square";
+	ui7->cVariableName = "m_uRightLFODest";
+	ui7->cEnumeratedList = "read,size";
 	ui7->dPresetData[0] = 0.000000;ui7->dPresetData[1] = 0.000000;ui7->dPresetData[2] = 0.000000;ui7->dPresetData[3] = 0.000000;ui7->dPresetData[4] = 0.000000;ui7->dPresetData[5] = 0.000000;ui7->dPresetData[6] = 0.000000;ui7->dPresetData[7] = 0.000000;ui7->dPresetData[8] = 0.000000;ui7->dPresetData[9] = 0.000000;ui7->dPresetData[10] = 0.000000;ui7->dPresetData[11] = 0.000000;ui7->dPresetData[12] = 0.000000;ui7->dPresetData[13] = 0.000000;ui7->dPresetData[14] = 0.000000;ui7->dPresetData[15] = 0.000000;
-	ui7->cControlName = "LFO Waveform Right";
+	ui7->cControlName = "Right LFO Dest";
 	ui7->bOwnerControl = false;
 	ui7->bMIDIControl = false;
 	ui7->uMIDIControlCommand = 176;
@@ -844,28 +870,28 @@ bool __stdcall CModMedFilt::initUI()
 	delete ui7;
 
 
-	m_fLFORateRight = 1.000000;
+	m_nBufferSizeRight = 1;
 	CUICtrl* ui8 = new CUICtrl;
 	ui8->uControlType = FILTER_CONTROL_CONTINUOUSLY_VARIABLE;
-	ui8->uControlId = 12;
+	ui8->uControlId = 10;
 	ui8->bLogSlider = false;
 	ui8->bExpSlider = false;
-	ui8->fUserDisplayDataLoLimit = 0.010000;
-	ui8->fUserDisplayDataHiLimit = 20.000000;
-	ui8->uUserDataType = floatData;
-	ui8->fInitUserIntValue = 0;
-	ui8->fInitUserFloatValue = 1.000000;
+	ui8->fUserDisplayDataLoLimit = 1.000000;
+	ui8->fUserDisplayDataHiLimit = 64.000000;
+	ui8->uUserDataType = intData;
+	ui8->fInitUserIntValue = 1.000000;
+	ui8->fInitUserFloatValue = 0;
 	ui8->fInitUserDoubleValue = 0;
 	ui8->fInitUserUINTValue = 0;
-	ui8->m_pUserCookedIntData = NULL;
-	ui8->m_pUserCookedFloatData = &m_fLFORateRight;
+	ui8->m_pUserCookedIntData = &m_nBufferSizeRight;
+	ui8->m_pUserCookedFloatData = NULL;
 	ui8->m_pUserCookedDoubleData = NULL;
 	ui8->m_pUserCookedUINTData = NULL;
 	ui8->cControlUnits = "                                                                ";
-	ui8->cVariableName = "m_fLFORateRight";
+	ui8->cVariableName = "m_nBufferSizeRight";
 	ui8->cEnumeratedList = "SEL1,SEL2,SEL3";
 	ui8->dPresetData[0] = 1.000000;ui8->dPresetData[1] = 0.000000;ui8->dPresetData[2] = 0.000000;ui8->dPresetData[3] = 0.000000;ui8->dPresetData[4] = 0.000000;ui8->dPresetData[5] = 0.000000;ui8->dPresetData[6] = 0.000000;ui8->dPresetData[7] = 0.000000;ui8->dPresetData[8] = 0.000000;ui8->dPresetData[9] = 0.000000;ui8->dPresetData[10] = 0.000000;ui8->dPresetData[11] = 0.000000;ui8->dPresetData[12] = 0.000000;ui8->dPresetData[13] = 0.000000;ui8->dPresetData[14] = 0.000000;ui8->dPresetData[15] = 0.000000;
-	ui8->cControlName = "LFO rate right";
+	ui8->cControlName = "Right Buffer Size";
 	ui8->bOwnerControl = false;
 	ui8->bMIDIControl = false;
 	ui8->uMIDIControlCommand = 176;
@@ -880,14 +906,14 @@ bool __stdcall CModMedFilt::initUI()
 	delete ui8;
 
 
-	m_uModSourceRight = 0;
+	m_uWaveformRight = 0;
 	CUICtrl* ui9 = new CUICtrl;
 	ui9->uControlType = FILTER_CONTROL_CONTINUOUSLY_VARIABLE;
-	ui9->uControlId = 13;
+	ui9->uControlId = 11;
 	ui9->bLogSlider = false;
 	ui9->bExpSlider = false;
 	ui9->fUserDisplayDataLoLimit = 0.000000;
-	ui9->fUserDisplayDataHiLimit = 1.000000;
+	ui9->fUserDisplayDataHiLimit = 3.000000;
 	ui9->uUserDataType = UINTData;
 	ui9->fInitUserIntValue = 0;
 	ui9->fInitUserFloatValue = 0;
@@ -896,12 +922,12 @@ bool __stdcall CModMedFilt::initUI()
 	ui9->m_pUserCookedIntData = NULL;
 	ui9->m_pUserCookedFloatData = NULL;
 	ui9->m_pUserCookedDoubleData = NULL;
-	ui9->m_pUserCookedUINTData = &m_uModSourceRight;
+	ui9->m_pUserCookedUINTData = &m_uWaveformRight;
 	ui9->cControlUnits = "                                                                ";
-	ui9->cVariableName = "m_uModSourceRight";
-	ui9->cEnumeratedList = "LFO,SELF";
+	ui9->cVariableName = "m_uWaveformRight";
+	ui9->cEnumeratedList = "sine,saw,tri,square";
 	ui9->dPresetData[0] = 0.000000;ui9->dPresetData[1] = 0.000000;ui9->dPresetData[2] = 0.000000;ui9->dPresetData[3] = 0.000000;ui9->dPresetData[4] = 0.000000;ui9->dPresetData[5] = 0.000000;ui9->dPresetData[6] = 0.000000;ui9->dPresetData[7] = 0.000000;ui9->dPresetData[8] = 0.000000;ui9->dPresetData[9] = 0.000000;ui9->dPresetData[10] = 0.000000;ui9->dPresetData[11] = 0.000000;ui9->dPresetData[12] = 0.000000;ui9->dPresetData[13] = 0.000000;ui9->dPresetData[14] = 0.000000;ui9->dPresetData[15] = 0.000000;
-	ui9->cControlName = "Mod Source Right";
+	ui9->cControlName = "LFO Waveform Right";
 	ui9->bOwnerControl = false;
 	ui9->bMIDIControl = false;
 	ui9->uMIDIControlCommand = 176;
@@ -916,28 +942,28 @@ bool __stdcall CModMedFilt::initUI()
 	delete ui9;
 
 
-	m_uDoModulateLeft = 0;
+	m_fLFORateRight = 1.000000;
 	CUICtrl* ui10 = new CUICtrl;
-	ui10->uControlType = FILTER_CONTROL_RADIO_SWITCH_VARIABLE;
-	ui10->uControlId = 45;
+	ui10->uControlType = FILTER_CONTROL_CONTINUOUSLY_VARIABLE;
+	ui10->uControlId = 12;
 	ui10->bLogSlider = false;
 	ui10->bExpSlider = false;
-	ui10->fUserDisplayDataLoLimit = 0.000000;
-	ui10->fUserDisplayDataHiLimit = 1.000000;
-	ui10->uUserDataType = UINTData;
+	ui10->fUserDisplayDataLoLimit = 0.010000;
+	ui10->fUserDisplayDataHiLimit = 20.000000;
+	ui10->uUserDataType = floatData;
 	ui10->fInitUserIntValue = 0;
-	ui10->fInitUserFloatValue = 0;
+	ui10->fInitUserFloatValue = 1.000000;
 	ui10->fInitUserDoubleValue = 0;
-	ui10->fInitUserUINTValue = 0.000000;
+	ui10->fInitUserUINTValue = 0;
 	ui10->m_pUserCookedIntData = NULL;
-	ui10->m_pUserCookedFloatData = NULL;
+	ui10->m_pUserCookedFloatData = &m_fLFORateRight;
 	ui10->m_pUserCookedDoubleData = NULL;
-	ui10->m_pUserCookedUINTData = &m_uDoModulateLeft;
-	ui10->cControlUnits = "";
-	ui10->cVariableName = "m_uDoModulateLeft";
-	ui10->cEnumeratedList = "SWITCH_OFF,SWITCH_ON";
-	ui10->dPresetData[0] = 0.000000;ui10->dPresetData[1] = 0.000000;ui10->dPresetData[2] = 0.000000;ui10->dPresetData[3] = 0.000000;ui10->dPresetData[4] = 0.000000;ui10->dPresetData[5] = 0.000000;ui10->dPresetData[6] = 0.000000;ui10->dPresetData[7] = 0.000000;ui10->dPresetData[8] = 0.000000;ui10->dPresetData[9] = 0.000000;ui10->dPresetData[10] = 0.000000;ui10->dPresetData[11] = 0.000000;ui10->dPresetData[12] = 0.000000;ui10->dPresetData[13] = 0.000000;ui10->dPresetData[14] = 0.000000;ui10->dPresetData[15] = 0.000000;
-	ui10->cControlName = "Left Buffer Mod";
+	ui10->m_pUserCookedUINTData = NULL;
+	ui10->cControlUnits = "                                                                ";
+	ui10->cVariableName = "m_fLFORateRight";
+	ui10->cEnumeratedList = "SEL1,SEL2,SEL3";
+	ui10->dPresetData[0] = 1.000000;ui10->dPresetData[1] = 0.000000;ui10->dPresetData[2] = 0.000000;ui10->dPresetData[3] = 0.000000;ui10->dPresetData[4] = 0.000000;ui10->dPresetData[5] = 0.000000;ui10->dPresetData[6] = 0.000000;ui10->dPresetData[7] = 0.000000;ui10->dPresetData[8] = 0.000000;ui10->dPresetData[9] = 0.000000;ui10->dPresetData[10] = 0.000000;ui10->dPresetData[11] = 0.000000;ui10->dPresetData[12] = 0.000000;ui10->dPresetData[13] = 0.000000;ui10->dPresetData[14] = 0.000000;ui10->dPresetData[15] = 0.000000;
+	ui10->cControlName = "LFO rate right";
 	ui10->bOwnerControl = false;
 	ui10->bMIDIControl = false;
 	ui10->uMIDIControlCommand = 176;
@@ -945,17 +971,17 @@ bool __stdcall CModMedFilt::initUI()
 	ui10->uMIDIControlChannel = 0;
 	ui10->nGUIRow = -1;
 	ui10->nGUIColumn = -1;
-	ui10->uControlTheme[0] = 0; ui10->uControlTheme[1] = 0; ui10->uControlTheme[2] = 0; ui10->uControlTheme[3] = 8355711; ui10->uControlTheme[4] = 139; ui10->uControlTheme[5] = 0; ui10->uControlTheme[6] = 0; ui10->uControlTheme[7] = 0; ui10->uControlTheme[8] = 0; ui10->uControlTheme[9] = 0; ui10->uControlTheme[10] = 0; ui10->uControlTheme[11] = 0; ui10->uControlTheme[12] = 0; ui10->uControlTheme[13] = 0; ui10->uControlTheme[14] = 0; ui10->uControlTheme[15] = 0; ui10->uControlTheme[16] = 0; ui10->uControlTheme[17] = 0; ui10->uControlTheme[18] = 0; ui10->uControlTheme[19] = 0; ui10->uControlTheme[20] = 0; ui10->uControlTheme[21] = 0; ui10->uControlTheme[22] = 0; ui10->uControlTheme[23] = 0; ui10->uControlTheme[24] = 0; ui10->uControlTheme[25] = 0; ui10->uControlTheme[26] = 0; ui10->uControlTheme[27] = 0; ui10->uControlTheme[28] = 0; ui10->uControlTheme[29] = 0; ui10->uControlTheme[30] = 0; ui10->uControlTheme[31] = 0; 
+	ui10->uControlTheme[0] = 0; ui10->uControlTheme[1] = 0; ui10->uControlTheme[2] = 0; ui10->uControlTheme[3] = 0; ui10->uControlTheme[4] = 0; ui10->uControlTheme[5] = 0; ui10->uControlTheme[6] = 0; ui10->uControlTheme[7] = 0; ui10->uControlTheme[8] = 0; ui10->uControlTheme[9] = 0; ui10->uControlTheme[10] = 0; ui10->uControlTheme[11] = 0; ui10->uControlTheme[12] = 0; ui10->uControlTheme[13] = 0; ui10->uControlTheme[14] = 0; ui10->uControlTheme[15] = 0; ui10->uControlTheme[16] = 0; ui10->uControlTheme[17] = 0; ui10->uControlTheme[18] = 0; ui10->uControlTheme[19] = 0; ui10->uControlTheme[20] = 0; ui10->uControlTheme[21] = 0; ui10->uControlTheme[22] = 0; ui10->uControlTheme[23] = 0; ui10->uControlTheme[24] = 0; ui10->uControlTheme[25] = 0; ui10->uControlTheme[26] = 0; ui10->uControlTheme[27] = 1; ui10->uControlTheme[28] = 0; ui10->uControlTheme[29] = 0; ui10->uControlTheme[30] = 0; ui10->uControlTheme[31] = 0; 
 	ui10->uFluxCapControl[0] = 0; ui10->uFluxCapControl[1] = 0; ui10->uFluxCapControl[2] = 0; ui10->uFluxCapControl[3] = 0; ui10->uFluxCapControl[4] = 0; ui10->uFluxCapControl[5] = 0; ui10->uFluxCapControl[6] = 0; ui10->uFluxCapControl[7] = 0; ui10->uFluxCapControl[8] = 0; ui10->uFluxCapControl[9] = 0; ui10->uFluxCapControl[10] = 0; ui10->uFluxCapControl[11] = 0; ui10->uFluxCapControl[12] = 0; ui10->uFluxCapControl[13] = 0; ui10->uFluxCapControl[14] = 0; ui10->uFluxCapControl[15] = 0; ui10->uFluxCapControl[16] = 0; ui10->uFluxCapControl[17] = 0; ui10->uFluxCapControl[18] = 0; ui10->uFluxCapControl[19] = 0; ui10->uFluxCapControl[20] = 0; ui10->uFluxCapControl[21] = 0; ui10->uFluxCapControl[22] = 0; ui10->uFluxCapControl[23] = 0; ui10->uFluxCapControl[24] = 0; ui10->uFluxCapControl[25] = 0; ui10->uFluxCapControl[26] = 0; ui10->uFluxCapControl[27] = 0; ui10->uFluxCapControl[28] = 0; ui10->uFluxCapControl[29] = 0; ui10->uFluxCapControl[30] = 0; ui10->uFluxCapControl[31] = 0; ui10->uFluxCapControl[32] = 0; ui10->uFluxCapControl[33] = 0; ui10->uFluxCapControl[34] = 0; ui10->uFluxCapControl[35] = 0; ui10->uFluxCapControl[36] = 0; ui10->uFluxCapControl[37] = 0; ui10->uFluxCapControl[38] = 0; ui10->uFluxCapControl[39] = 0; ui10->uFluxCapControl[40] = 0; ui10->uFluxCapControl[41] = 0; ui10->uFluxCapControl[42] = 0; ui10->uFluxCapControl[43] = 0; ui10->uFluxCapControl[44] = 0; ui10->uFluxCapControl[45] = 0; ui10->uFluxCapControl[46] = 0; ui10->uFluxCapControl[47] = 0; ui10->uFluxCapControl[48] = 0; ui10->uFluxCapControl[49] = 0; ui10->uFluxCapControl[50] = 0; ui10->uFluxCapControl[51] = 0; ui10->uFluxCapControl[52] = 0; ui10->uFluxCapControl[53] = 0; ui10->uFluxCapControl[54] = 0; ui10->uFluxCapControl[55] = 0; ui10->uFluxCapControl[56] = 0; ui10->uFluxCapControl[57] = 0; ui10->uFluxCapControl[58] = 0; ui10->uFluxCapControl[59] = 0; ui10->uFluxCapControl[60] = 0; ui10->uFluxCapControl[61] = 0; ui10->uFluxCapControl[62] = 0; ui10->uFluxCapControl[63] = 0; 
 	ui10->fFluxCapData[0] = 0.000000; ui10->fFluxCapData[1] = 0.000000; ui10->fFluxCapData[2] = 0.000000; ui10->fFluxCapData[3] = 0.000000; ui10->fFluxCapData[4] = 0.000000; ui10->fFluxCapData[5] = 0.000000; ui10->fFluxCapData[6] = 0.000000; ui10->fFluxCapData[7] = 0.000000; ui10->fFluxCapData[8] = 0.000000; ui10->fFluxCapData[9] = 0.000000; ui10->fFluxCapData[10] = 0.000000; ui10->fFluxCapData[11] = 0.000000; ui10->fFluxCapData[12] = 0.000000; ui10->fFluxCapData[13] = 0.000000; ui10->fFluxCapData[14] = 0.000000; ui10->fFluxCapData[15] = 0.000000; ui10->fFluxCapData[16] = 0.000000; ui10->fFluxCapData[17] = 0.000000; ui10->fFluxCapData[18] = 0.000000; ui10->fFluxCapData[19] = 0.000000; ui10->fFluxCapData[20] = 0.000000; ui10->fFluxCapData[21] = 0.000000; ui10->fFluxCapData[22] = 0.000000; ui10->fFluxCapData[23] = 0.000000; ui10->fFluxCapData[24] = 0.000000; ui10->fFluxCapData[25] = 0.000000; ui10->fFluxCapData[26] = 0.000000; ui10->fFluxCapData[27] = 0.000000; ui10->fFluxCapData[28] = 0.000000; ui10->fFluxCapData[29] = 0.000000; ui10->fFluxCapData[30] = 0.000000; ui10->fFluxCapData[31] = 0.000000; ui10->fFluxCapData[32] = 0.000000; ui10->fFluxCapData[33] = 0.000000; ui10->fFluxCapData[34] = 0.000000; ui10->fFluxCapData[35] = 0.000000; ui10->fFluxCapData[36] = 0.000000; ui10->fFluxCapData[37] = 0.000000; ui10->fFluxCapData[38] = 0.000000; ui10->fFluxCapData[39] = 0.000000; ui10->fFluxCapData[40] = 0.000000; ui10->fFluxCapData[41] = 0.000000; ui10->fFluxCapData[42] = 0.000000; ui10->fFluxCapData[43] = 0.000000; ui10->fFluxCapData[44] = 0.000000; ui10->fFluxCapData[45] = 0.000000; ui10->fFluxCapData[46] = 0.000000; ui10->fFluxCapData[47] = 0.000000; ui10->fFluxCapData[48] = 0.000000; ui10->fFluxCapData[49] = 0.000000; ui10->fFluxCapData[50] = 0.000000; ui10->fFluxCapData[51] = 0.000000; ui10->fFluxCapData[52] = 0.000000; ui10->fFluxCapData[53] = 0.000000; ui10->fFluxCapData[54] = 0.000000; ui10->fFluxCapData[55] = 0.000000; ui10->fFluxCapData[56] = 0.000000; ui10->fFluxCapData[57] = 0.000000; ui10->fFluxCapData[58] = 0.000000; ui10->fFluxCapData[59] = 0.000000; ui10->fFluxCapData[60] = 0.000000; ui10->fFluxCapData[61] = 0.000000; ui10->fFluxCapData[62] = 0.000000; ui10->fFluxCapData[63] = 0.000000; 
 	m_UIControlList.append(*ui10);
 	delete ui10;
 
 
-	m_uStereoLink = 0;
+	m_uModSourceRight = 0;
 	CUICtrl* ui11 = new CUICtrl;
-	ui11->uControlType = FILTER_CONTROL_RADIO_SWITCH_VARIABLE;
-	ui11->uControlId = 46;
+	ui11->uControlType = FILTER_CONTROL_CONTINUOUSLY_VARIABLE;
+	ui11->uControlId = 13;
 	ui11->bLogSlider = false;
 	ui11->bExpSlider = false;
 	ui11->fUserDisplayDataLoLimit = 0.000000;
@@ -968,12 +994,12 @@ bool __stdcall CModMedFilt::initUI()
 	ui11->m_pUserCookedIntData = NULL;
 	ui11->m_pUserCookedFloatData = NULL;
 	ui11->m_pUserCookedDoubleData = NULL;
-	ui11->m_pUserCookedUINTData = &m_uStereoLink;
-	ui11->cControlUnits = "";
-	ui11->cVariableName = "m_uStereoLink";
-	ui11->cEnumeratedList = "SWITCH_OFF,SWITCH_ON";
+	ui11->m_pUserCookedUINTData = &m_uModSourceRight;
+	ui11->cControlUnits = "                                                                ";
+	ui11->cVariableName = "m_uModSourceRight";
+	ui11->cEnumeratedList = "LFO,SELF";
 	ui11->dPresetData[0] = 0.000000;ui11->dPresetData[1] = 0.000000;ui11->dPresetData[2] = 0.000000;ui11->dPresetData[3] = 0.000000;ui11->dPresetData[4] = 0.000000;ui11->dPresetData[5] = 0.000000;ui11->dPresetData[6] = 0.000000;ui11->dPresetData[7] = 0.000000;ui11->dPresetData[8] = 0.000000;ui11->dPresetData[9] = 0.000000;ui11->dPresetData[10] = 0.000000;ui11->dPresetData[11] = 0.000000;ui11->dPresetData[12] = 0.000000;ui11->dPresetData[13] = 0.000000;ui11->dPresetData[14] = 0.000000;ui11->dPresetData[15] = 0.000000;
-	ui11->cControlName = "Stereo Link";
+	ui11->cControlName = "Mod Source Right";
 	ui11->bOwnerControl = false;
 	ui11->bMIDIControl = false;
 	ui11->uMIDIControlCommand = 176;
@@ -981,17 +1007,17 @@ bool __stdcall CModMedFilt::initUI()
 	ui11->uMIDIControlChannel = 0;
 	ui11->nGUIRow = -1;
 	ui11->nGUIColumn = -1;
-	ui11->uControlTheme[0] = 0; ui11->uControlTheme[1] = 0; ui11->uControlTheme[2] = 0; ui11->uControlTheme[3] = 8355711; ui11->uControlTheme[4] = 139; ui11->uControlTheme[5] = 0; ui11->uControlTheme[6] = 0; ui11->uControlTheme[7] = 0; ui11->uControlTheme[8] = 0; ui11->uControlTheme[9] = 0; ui11->uControlTheme[10] = 0; ui11->uControlTheme[11] = 0; ui11->uControlTheme[12] = 0; ui11->uControlTheme[13] = 0; ui11->uControlTheme[14] = 0; ui11->uControlTheme[15] = 0; ui11->uControlTheme[16] = 0; ui11->uControlTheme[17] = 0; ui11->uControlTheme[18] = 0; ui11->uControlTheme[19] = 0; ui11->uControlTheme[20] = 0; ui11->uControlTheme[21] = 0; ui11->uControlTheme[22] = 0; ui11->uControlTheme[23] = 0; ui11->uControlTheme[24] = 0; ui11->uControlTheme[25] = 0; ui11->uControlTheme[26] = 0; ui11->uControlTheme[27] = 0; ui11->uControlTheme[28] = 0; ui11->uControlTheme[29] = 0; ui11->uControlTheme[30] = 0; ui11->uControlTheme[31] = 0; 
+	ui11->uControlTheme[0] = 0; ui11->uControlTheme[1] = 0; ui11->uControlTheme[2] = 0; ui11->uControlTheme[3] = 0; ui11->uControlTheme[4] = 0; ui11->uControlTheme[5] = 0; ui11->uControlTheme[6] = 0; ui11->uControlTheme[7] = 0; ui11->uControlTheme[8] = 0; ui11->uControlTheme[9] = 0; ui11->uControlTheme[10] = 0; ui11->uControlTheme[11] = 0; ui11->uControlTheme[12] = 0; ui11->uControlTheme[13] = 0; ui11->uControlTheme[14] = 0; ui11->uControlTheme[15] = 0; ui11->uControlTheme[16] = 0; ui11->uControlTheme[17] = 0; ui11->uControlTheme[18] = 0; ui11->uControlTheme[19] = 0; ui11->uControlTheme[20] = 0; ui11->uControlTheme[21] = 0; ui11->uControlTheme[22] = 0; ui11->uControlTheme[23] = 0; ui11->uControlTheme[24] = 0; ui11->uControlTheme[25] = 0; ui11->uControlTheme[26] = 0; ui11->uControlTheme[27] = 1; ui11->uControlTheme[28] = 0; ui11->uControlTheme[29] = 0; ui11->uControlTheme[30] = 0; ui11->uControlTheme[31] = 0; 
 	ui11->uFluxCapControl[0] = 0; ui11->uFluxCapControl[1] = 0; ui11->uFluxCapControl[2] = 0; ui11->uFluxCapControl[3] = 0; ui11->uFluxCapControl[4] = 0; ui11->uFluxCapControl[5] = 0; ui11->uFluxCapControl[6] = 0; ui11->uFluxCapControl[7] = 0; ui11->uFluxCapControl[8] = 0; ui11->uFluxCapControl[9] = 0; ui11->uFluxCapControl[10] = 0; ui11->uFluxCapControl[11] = 0; ui11->uFluxCapControl[12] = 0; ui11->uFluxCapControl[13] = 0; ui11->uFluxCapControl[14] = 0; ui11->uFluxCapControl[15] = 0; ui11->uFluxCapControl[16] = 0; ui11->uFluxCapControl[17] = 0; ui11->uFluxCapControl[18] = 0; ui11->uFluxCapControl[19] = 0; ui11->uFluxCapControl[20] = 0; ui11->uFluxCapControl[21] = 0; ui11->uFluxCapControl[22] = 0; ui11->uFluxCapControl[23] = 0; ui11->uFluxCapControl[24] = 0; ui11->uFluxCapControl[25] = 0; ui11->uFluxCapControl[26] = 0; ui11->uFluxCapControl[27] = 0; ui11->uFluxCapControl[28] = 0; ui11->uFluxCapControl[29] = 0; ui11->uFluxCapControl[30] = 0; ui11->uFluxCapControl[31] = 0; ui11->uFluxCapControl[32] = 0; ui11->uFluxCapControl[33] = 0; ui11->uFluxCapControl[34] = 0; ui11->uFluxCapControl[35] = 0; ui11->uFluxCapControl[36] = 0; ui11->uFluxCapControl[37] = 0; ui11->uFluxCapControl[38] = 0; ui11->uFluxCapControl[39] = 0; ui11->uFluxCapControl[40] = 0; ui11->uFluxCapControl[41] = 0; ui11->uFluxCapControl[42] = 0; ui11->uFluxCapControl[43] = 0; ui11->uFluxCapControl[44] = 0; ui11->uFluxCapControl[45] = 0; ui11->uFluxCapControl[46] = 0; ui11->uFluxCapControl[47] = 0; ui11->uFluxCapControl[48] = 0; ui11->uFluxCapControl[49] = 0; ui11->uFluxCapControl[50] = 0; ui11->uFluxCapControl[51] = 0; ui11->uFluxCapControl[52] = 0; ui11->uFluxCapControl[53] = 0; ui11->uFluxCapControl[54] = 0; ui11->uFluxCapControl[55] = 0; ui11->uFluxCapControl[56] = 0; ui11->uFluxCapControl[57] = 0; ui11->uFluxCapControl[58] = 0; ui11->uFluxCapControl[59] = 0; ui11->uFluxCapControl[60] = 0; ui11->uFluxCapControl[61] = 0; ui11->uFluxCapControl[62] = 0; ui11->uFluxCapControl[63] = 0; 
 	ui11->fFluxCapData[0] = 0.000000; ui11->fFluxCapData[1] = 0.000000; ui11->fFluxCapData[2] = 0.000000; ui11->fFluxCapData[3] = 0.000000; ui11->fFluxCapData[4] = 0.000000; ui11->fFluxCapData[5] = 0.000000; ui11->fFluxCapData[6] = 0.000000; ui11->fFluxCapData[7] = 0.000000; ui11->fFluxCapData[8] = 0.000000; ui11->fFluxCapData[9] = 0.000000; ui11->fFluxCapData[10] = 0.000000; ui11->fFluxCapData[11] = 0.000000; ui11->fFluxCapData[12] = 0.000000; ui11->fFluxCapData[13] = 0.000000; ui11->fFluxCapData[14] = 0.000000; ui11->fFluxCapData[15] = 0.000000; ui11->fFluxCapData[16] = 0.000000; ui11->fFluxCapData[17] = 0.000000; ui11->fFluxCapData[18] = 0.000000; ui11->fFluxCapData[19] = 0.000000; ui11->fFluxCapData[20] = 0.000000; ui11->fFluxCapData[21] = 0.000000; ui11->fFluxCapData[22] = 0.000000; ui11->fFluxCapData[23] = 0.000000; ui11->fFluxCapData[24] = 0.000000; ui11->fFluxCapData[25] = 0.000000; ui11->fFluxCapData[26] = 0.000000; ui11->fFluxCapData[27] = 0.000000; ui11->fFluxCapData[28] = 0.000000; ui11->fFluxCapData[29] = 0.000000; ui11->fFluxCapData[30] = 0.000000; ui11->fFluxCapData[31] = 0.000000; ui11->fFluxCapData[32] = 0.000000; ui11->fFluxCapData[33] = 0.000000; ui11->fFluxCapData[34] = 0.000000; ui11->fFluxCapData[35] = 0.000000; ui11->fFluxCapData[36] = 0.000000; ui11->fFluxCapData[37] = 0.000000; ui11->fFluxCapData[38] = 0.000000; ui11->fFluxCapData[39] = 0.000000; ui11->fFluxCapData[40] = 0.000000; ui11->fFluxCapData[41] = 0.000000; ui11->fFluxCapData[42] = 0.000000; ui11->fFluxCapData[43] = 0.000000; ui11->fFluxCapData[44] = 0.000000; ui11->fFluxCapData[45] = 0.000000; ui11->fFluxCapData[46] = 0.000000; ui11->fFluxCapData[47] = 0.000000; ui11->fFluxCapData[48] = 0.000000; ui11->fFluxCapData[49] = 0.000000; ui11->fFluxCapData[50] = 0.000000; ui11->fFluxCapData[51] = 0.000000; ui11->fFluxCapData[52] = 0.000000; ui11->fFluxCapData[53] = 0.000000; ui11->fFluxCapData[54] = 0.000000; ui11->fFluxCapData[55] = 0.000000; ui11->fFluxCapData[56] = 0.000000; ui11->fFluxCapData[57] = 0.000000; ui11->fFluxCapData[58] = 0.000000; ui11->fFluxCapData[59] = 0.000000; ui11->fFluxCapData[60] = 0.000000; ui11->fFluxCapData[61] = 0.000000; ui11->fFluxCapData[62] = 0.000000; ui11->fFluxCapData[63] = 0.000000; 
 	m_UIControlList.append(*ui11);
 	delete ui11;
 
 
-	m_uMixMod = 0;
+	m_uDoModulateLeft = 0;
 	CUICtrl* ui12 = new CUICtrl;
 	ui12->uControlType = FILTER_CONTROL_RADIO_SWITCH_VARIABLE;
-	ui12->uControlId = 47;
+	ui12->uControlId = 45;
 	ui12->bLogSlider = false;
 	ui12->bExpSlider = false;
 	ui12->fUserDisplayDataLoLimit = 0.000000;
@@ -1004,12 +1030,12 @@ bool __stdcall CModMedFilt::initUI()
 	ui12->m_pUserCookedIntData = NULL;
 	ui12->m_pUserCookedFloatData = NULL;
 	ui12->m_pUserCookedDoubleData = NULL;
-	ui12->m_pUserCookedUINTData = &m_uMixMod;
+	ui12->m_pUserCookedUINTData = &m_uDoModulateLeft;
 	ui12->cControlUnits = "";
-	ui12->cVariableName = "m_uMixMod";
+	ui12->cVariableName = "m_uDoModulateLeft";
 	ui12->cEnumeratedList = "SWITCH_OFF,SWITCH_ON";
 	ui12->dPresetData[0] = 0.000000;ui12->dPresetData[1] = 0.000000;ui12->dPresetData[2] = 0.000000;ui12->dPresetData[3] = 0.000000;ui12->dPresetData[4] = 0.000000;ui12->dPresetData[5] = 0.000000;ui12->dPresetData[6] = 0.000000;ui12->dPresetData[7] = 0.000000;ui12->dPresetData[8] = 0.000000;ui12->dPresetData[9] = 0.000000;ui12->dPresetData[10] = 0.000000;ui12->dPresetData[11] = 0.000000;ui12->dPresetData[12] = 0.000000;ui12->dPresetData[13] = 0.000000;ui12->dPresetData[14] = 0.000000;ui12->dPresetData[15] = 0.000000;
-	ui12->cControlName = "Mix Mod";
+	ui12->cControlName = "Left Buffer Mod";
 	ui12->bOwnerControl = false;
 	ui12->bMIDIControl = false;
 	ui12->uMIDIControlCommand = 176;
@@ -1024,10 +1050,10 @@ bool __stdcall CModMedFilt::initUI()
 	delete ui12;
 
 
-	m_uDoModulateRight = 0;
+	m_uStereoLink = 0;
 	CUICtrl* ui13 = new CUICtrl;
 	ui13->uControlType = FILTER_CONTROL_RADIO_SWITCH_VARIABLE;
-	ui13->uControlId = 48;
+	ui13->uControlId = 46;
 	ui13->bLogSlider = false;
 	ui13->bExpSlider = false;
 	ui13->fUserDisplayDataLoLimit = 0.000000;
@@ -1040,12 +1066,12 @@ bool __stdcall CModMedFilt::initUI()
 	ui13->m_pUserCookedIntData = NULL;
 	ui13->m_pUserCookedFloatData = NULL;
 	ui13->m_pUserCookedDoubleData = NULL;
-	ui13->m_pUserCookedUINTData = &m_uDoModulateRight;
+	ui13->m_pUserCookedUINTData = &m_uStereoLink;
 	ui13->cControlUnits = "";
-	ui13->cVariableName = "m_uDoModulateRight";
+	ui13->cVariableName = "m_uStereoLink";
 	ui13->cEnumeratedList = "SWITCH_OFF,SWITCH_ON";
 	ui13->dPresetData[0] = 0.000000;ui13->dPresetData[1] = 0.000000;ui13->dPresetData[2] = 0.000000;ui13->dPresetData[3] = 0.000000;ui13->dPresetData[4] = 0.000000;ui13->dPresetData[5] = 0.000000;ui13->dPresetData[6] = 0.000000;ui13->dPresetData[7] = 0.000000;ui13->dPresetData[8] = 0.000000;ui13->dPresetData[9] = 0.000000;ui13->dPresetData[10] = 0.000000;ui13->dPresetData[11] = 0.000000;ui13->dPresetData[12] = 0.000000;ui13->dPresetData[13] = 0.000000;ui13->dPresetData[14] = 0.000000;ui13->dPresetData[15] = 0.000000;
-	ui13->cControlName = "Right Buffer Mod";
+	ui13->cControlName = "Stereo Link";
 	ui13->bOwnerControl = false;
 	ui13->bMIDIControl = false;
 	ui13->uMIDIControlCommand = 176;
@@ -1058,6 +1084,78 @@ bool __stdcall CModMedFilt::initUI()
 	ui13->fFluxCapData[0] = 0.000000; ui13->fFluxCapData[1] = 0.000000; ui13->fFluxCapData[2] = 0.000000; ui13->fFluxCapData[3] = 0.000000; ui13->fFluxCapData[4] = 0.000000; ui13->fFluxCapData[5] = 0.000000; ui13->fFluxCapData[6] = 0.000000; ui13->fFluxCapData[7] = 0.000000; ui13->fFluxCapData[8] = 0.000000; ui13->fFluxCapData[9] = 0.000000; ui13->fFluxCapData[10] = 0.000000; ui13->fFluxCapData[11] = 0.000000; ui13->fFluxCapData[12] = 0.000000; ui13->fFluxCapData[13] = 0.000000; ui13->fFluxCapData[14] = 0.000000; ui13->fFluxCapData[15] = 0.000000; ui13->fFluxCapData[16] = 0.000000; ui13->fFluxCapData[17] = 0.000000; ui13->fFluxCapData[18] = 0.000000; ui13->fFluxCapData[19] = 0.000000; ui13->fFluxCapData[20] = 0.000000; ui13->fFluxCapData[21] = 0.000000; ui13->fFluxCapData[22] = 0.000000; ui13->fFluxCapData[23] = 0.000000; ui13->fFluxCapData[24] = 0.000000; ui13->fFluxCapData[25] = 0.000000; ui13->fFluxCapData[26] = 0.000000; ui13->fFluxCapData[27] = 0.000000; ui13->fFluxCapData[28] = 0.000000; ui13->fFluxCapData[29] = 0.000000; ui13->fFluxCapData[30] = 0.000000; ui13->fFluxCapData[31] = 0.000000; ui13->fFluxCapData[32] = 0.000000; ui13->fFluxCapData[33] = 0.000000; ui13->fFluxCapData[34] = 0.000000; ui13->fFluxCapData[35] = 0.000000; ui13->fFluxCapData[36] = 0.000000; ui13->fFluxCapData[37] = 0.000000; ui13->fFluxCapData[38] = 0.000000; ui13->fFluxCapData[39] = 0.000000; ui13->fFluxCapData[40] = 0.000000; ui13->fFluxCapData[41] = 0.000000; ui13->fFluxCapData[42] = 0.000000; ui13->fFluxCapData[43] = 0.000000; ui13->fFluxCapData[44] = 0.000000; ui13->fFluxCapData[45] = 0.000000; ui13->fFluxCapData[46] = 0.000000; ui13->fFluxCapData[47] = 0.000000; ui13->fFluxCapData[48] = 0.000000; ui13->fFluxCapData[49] = 0.000000; ui13->fFluxCapData[50] = 0.000000; ui13->fFluxCapData[51] = 0.000000; ui13->fFluxCapData[52] = 0.000000; ui13->fFluxCapData[53] = 0.000000; ui13->fFluxCapData[54] = 0.000000; ui13->fFluxCapData[55] = 0.000000; ui13->fFluxCapData[56] = 0.000000; ui13->fFluxCapData[57] = 0.000000; ui13->fFluxCapData[58] = 0.000000; ui13->fFluxCapData[59] = 0.000000; ui13->fFluxCapData[60] = 0.000000; ui13->fFluxCapData[61] = 0.000000; ui13->fFluxCapData[62] = 0.000000; ui13->fFluxCapData[63] = 0.000000; 
 	m_UIControlList.append(*ui13);
 	delete ui13;
+
+
+	m_uMixMod = 0;
+	CUICtrl* ui14 = new CUICtrl;
+	ui14->uControlType = FILTER_CONTROL_RADIO_SWITCH_VARIABLE;
+	ui14->uControlId = 47;
+	ui14->bLogSlider = false;
+	ui14->bExpSlider = false;
+	ui14->fUserDisplayDataLoLimit = 0.000000;
+	ui14->fUserDisplayDataHiLimit = 1.000000;
+	ui14->uUserDataType = UINTData;
+	ui14->fInitUserIntValue = 0;
+	ui14->fInitUserFloatValue = 0;
+	ui14->fInitUserDoubleValue = 0;
+	ui14->fInitUserUINTValue = 0.000000;
+	ui14->m_pUserCookedIntData = NULL;
+	ui14->m_pUserCookedFloatData = NULL;
+	ui14->m_pUserCookedDoubleData = NULL;
+	ui14->m_pUserCookedUINTData = &m_uMixMod;
+	ui14->cControlUnits = "";
+	ui14->cVariableName = "m_uMixMod";
+	ui14->cEnumeratedList = "SWITCH_OFF,SWITCH_ON";
+	ui14->dPresetData[0] = 0.000000;ui14->dPresetData[1] = 0.000000;ui14->dPresetData[2] = 0.000000;ui14->dPresetData[3] = 0.000000;ui14->dPresetData[4] = 0.000000;ui14->dPresetData[5] = 0.000000;ui14->dPresetData[6] = 0.000000;ui14->dPresetData[7] = 0.000000;ui14->dPresetData[8] = 0.000000;ui14->dPresetData[9] = 0.000000;ui14->dPresetData[10] = 0.000000;ui14->dPresetData[11] = 0.000000;ui14->dPresetData[12] = 0.000000;ui14->dPresetData[13] = 0.000000;ui14->dPresetData[14] = 0.000000;ui14->dPresetData[15] = 0.000000;
+	ui14->cControlName = "Mix Mod";
+	ui14->bOwnerControl = false;
+	ui14->bMIDIControl = false;
+	ui14->uMIDIControlCommand = 176;
+	ui14->uMIDIControlName = 3;
+	ui14->uMIDIControlChannel = 0;
+	ui14->nGUIRow = -1;
+	ui14->nGUIColumn = -1;
+	ui14->uControlTheme[0] = 0; ui14->uControlTheme[1] = 0; ui14->uControlTheme[2] = 0; ui14->uControlTheme[3] = 8355711; ui14->uControlTheme[4] = 139; ui14->uControlTheme[5] = 0; ui14->uControlTheme[6] = 0; ui14->uControlTheme[7] = 0; ui14->uControlTheme[8] = 0; ui14->uControlTheme[9] = 0; ui14->uControlTheme[10] = 0; ui14->uControlTheme[11] = 0; ui14->uControlTheme[12] = 0; ui14->uControlTheme[13] = 0; ui14->uControlTheme[14] = 0; ui14->uControlTheme[15] = 0; ui14->uControlTheme[16] = 0; ui14->uControlTheme[17] = 0; ui14->uControlTheme[18] = 0; ui14->uControlTheme[19] = 0; ui14->uControlTheme[20] = 0; ui14->uControlTheme[21] = 0; ui14->uControlTheme[22] = 0; ui14->uControlTheme[23] = 0; ui14->uControlTheme[24] = 0; ui14->uControlTheme[25] = 0; ui14->uControlTheme[26] = 0; ui14->uControlTheme[27] = 0; ui14->uControlTheme[28] = 0; ui14->uControlTheme[29] = 0; ui14->uControlTheme[30] = 0; ui14->uControlTheme[31] = 0; 
+	ui14->uFluxCapControl[0] = 0; ui14->uFluxCapControl[1] = 0; ui14->uFluxCapControl[2] = 0; ui14->uFluxCapControl[3] = 0; ui14->uFluxCapControl[4] = 0; ui14->uFluxCapControl[5] = 0; ui14->uFluxCapControl[6] = 0; ui14->uFluxCapControl[7] = 0; ui14->uFluxCapControl[8] = 0; ui14->uFluxCapControl[9] = 0; ui14->uFluxCapControl[10] = 0; ui14->uFluxCapControl[11] = 0; ui14->uFluxCapControl[12] = 0; ui14->uFluxCapControl[13] = 0; ui14->uFluxCapControl[14] = 0; ui14->uFluxCapControl[15] = 0; ui14->uFluxCapControl[16] = 0; ui14->uFluxCapControl[17] = 0; ui14->uFluxCapControl[18] = 0; ui14->uFluxCapControl[19] = 0; ui14->uFluxCapControl[20] = 0; ui14->uFluxCapControl[21] = 0; ui14->uFluxCapControl[22] = 0; ui14->uFluxCapControl[23] = 0; ui14->uFluxCapControl[24] = 0; ui14->uFluxCapControl[25] = 0; ui14->uFluxCapControl[26] = 0; ui14->uFluxCapControl[27] = 0; ui14->uFluxCapControl[28] = 0; ui14->uFluxCapControl[29] = 0; ui14->uFluxCapControl[30] = 0; ui14->uFluxCapControl[31] = 0; ui14->uFluxCapControl[32] = 0; ui14->uFluxCapControl[33] = 0; ui14->uFluxCapControl[34] = 0; ui14->uFluxCapControl[35] = 0; ui14->uFluxCapControl[36] = 0; ui14->uFluxCapControl[37] = 0; ui14->uFluxCapControl[38] = 0; ui14->uFluxCapControl[39] = 0; ui14->uFluxCapControl[40] = 0; ui14->uFluxCapControl[41] = 0; ui14->uFluxCapControl[42] = 0; ui14->uFluxCapControl[43] = 0; ui14->uFluxCapControl[44] = 0; ui14->uFluxCapControl[45] = 0; ui14->uFluxCapControl[46] = 0; ui14->uFluxCapControl[47] = 0; ui14->uFluxCapControl[48] = 0; ui14->uFluxCapControl[49] = 0; ui14->uFluxCapControl[50] = 0; ui14->uFluxCapControl[51] = 0; ui14->uFluxCapControl[52] = 0; ui14->uFluxCapControl[53] = 0; ui14->uFluxCapControl[54] = 0; ui14->uFluxCapControl[55] = 0; ui14->uFluxCapControl[56] = 0; ui14->uFluxCapControl[57] = 0; ui14->uFluxCapControl[58] = 0; ui14->uFluxCapControl[59] = 0; ui14->uFluxCapControl[60] = 0; ui14->uFluxCapControl[61] = 0; ui14->uFluxCapControl[62] = 0; ui14->uFluxCapControl[63] = 0; 
+	ui14->fFluxCapData[0] = 0.000000; ui14->fFluxCapData[1] = 0.000000; ui14->fFluxCapData[2] = 0.000000; ui14->fFluxCapData[3] = 0.000000; ui14->fFluxCapData[4] = 0.000000; ui14->fFluxCapData[5] = 0.000000; ui14->fFluxCapData[6] = 0.000000; ui14->fFluxCapData[7] = 0.000000; ui14->fFluxCapData[8] = 0.000000; ui14->fFluxCapData[9] = 0.000000; ui14->fFluxCapData[10] = 0.000000; ui14->fFluxCapData[11] = 0.000000; ui14->fFluxCapData[12] = 0.000000; ui14->fFluxCapData[13] = 0.000000; ui14->fFluxCapData[14] = 0.000000; ui14->fFluxCapData[15] = 0.000000; ui14->fFluxCapData[16] = 0.000000; ui14->fFluxCapData[17] = 0.000000; ui14->fFluxCapData[18] = 0.000000; ui14->fFluxCapData[19] = 0.000000; ui14->fFluxCapData[20] = 0.000000; ui14->fFluxCapData[21] = 0.000000; ui14->fFluxCapData[22] = 0.000000; ui14->fFluxCapData[23] = 0.000000; ui14->fFluxCapData[24] = 0.000000; ui14->fFluxCapData[25] = 0.000000; ui14->fFluxCapData[26] = 0.000000; ui14->fFluxCapData[27] = 0.000000; ui14->fFluxCapData[28] = 0.000000; ui14->fFluxCapData[29] = 0.000000; ui14->fFluxCapData[30] = 0.000000; ui14->fFluxCapData[31] = 0.000000; ui14->fFluxCapData[32] = 0.000000; ui14->fFluxCapData[33] = 0.000000; ui14->fFluxCapData[34] = 0.000000; ui14->fFluxCapData[35] = 0.000000; ui14->fFluxCapData[36] = 0.000000; ui14->fFluxCapData[37] = 0.000000; ui14->fFluxCapData[38] = 0.000000; ui14->fFluxCapData[39] = 0.000000; ui14->fFluxCapData[40] = 0.000000; ui14->fFluxCapData[41] = 0.000000; ui14->fFluxCapData[42] = 0.000000; ui14->fFluxCapData[43] = 0.000000; ui14->fFluxCapData[44] = 0.000000; ui14->fFluxCapData[45] = 0.000000; ui14->fFluxCapData[46] = 0.000000; ui14->fFluxCapData[47] = 0.000000; ui14->fFluxCapData[48] = 0.000000; ui14->fFluxCapData[49] = 0.000000; ui14->fFluxCapData[50] = 0.000000; ui14->fFluxCapData[51] = 0.000000; ui14->fFluxCapData[52] = 0.000000; ui14->fFluxCapData[53] = 0.000000; ui14->fFluxCapData[54] = 0.000000; ui14->fFluxCapData[55] = 0.000000; ui14->fFluxCapData[56] = 0.000000; ui14->fFluxCapData[57] = 0.000000; ui14->fFluxCapData[58] = 0.000000; ui14->fFluxCapData[59] = 0.000000; ui14->fFluxCapData[60] = 0.000000; ui14->fFluxCapData[61] = 0.000000; ui14->fFluxCapData[62] = 0.000000; ui14->fFluxCapData[63] = 0.000000; 
+	m_UIControlList.append(*ui14);
+	delete ui14;
+
+
+	m_uDoModulateRight = 0;
+	CUICtrl* ui15 = new CUICtrl;
+	ui15->uControlType = FILTER_CONTROL_RADIO_SWITCH_VARIABLE;
+	ui15->uControlId = 48;
+	ui15->bLogSlider = false;
+	ui15->bExpSlider = false;
+	ui15->fUserDisplayDataLoLimit = 0.000000;
+	ui15->fUserDisplayDataHiLimit = 1.000000;
+	ui15->uUserDataType = UINTData;
+	ui15->fInitUserIntValue = 0;
+	ui15->fInitUserFloatValue = 0;
+	ui15->fInitUserDoubleValue = 0;
+	ui15->fInitUserUINTValue = 0.000000;
+	ui15->m_pUserCookedIntData = NULL;
+	ui15->m_pUserCookedFloatData = NULL;
+	ui15->m_pUserCookedDoubleData = NULL;
+	ui15->m_pUserCookedUINTData = &m_uDoModulateRight;
+	ui15->cControlUnits = "";
+	ui15->cVariableName = "m_uDoModulateRight";
+	ui15->cEnumeratedList = "SWITCH_OFF,SWITCH_ON";
+	ui15->dPresetData[0] = 0.000000;ui15->dPresetData[1] = 0.000000;ui15->dPresetData[2] = 0.000000;ui15->dPresetData[3] = 0.000000;ui15->dPresetData[4] = 0.000000;ui15->dPresetData[5] = 0.000000;ui15->dPresetData[6] = 0.000000;ui15->dPresetData[7] = 0.000000;ui15->dPresetData[8] = 0.000000;ui15->dPresetData[9] = 0.000000;ui15->dPresetData[10] = 0.000000;ui15->dPresetData[11] = 0.000000;ui15->dPresetData[12] = 0.000000;ui15->dPresetData[13] = 0.000000;ui15->dPresetData[14] = 0.000000;ui15->dPresetData[15] = 0.000000;
+	ui15->cControlName = "Right Buffer Mod";
+	ui15->bOwnerControl = false;
+	ui15->bMIDIControl = false;
+	ui15->uMIDIControlCommand = 176;
+	ui15->uMIDIControlName = 3;
+	ui15->uMIDIControlChannel = 0;
+	ui15->nGUIRow = -1;
+	ui15->nGUIColumn = -1;
+	ui15->uControlTheme[0] = 0; ui15->uControlTheme[1] = 0; ui15->uControlTheme[2] = 0; ui15->uControlTheme[3] = 8355711; ui15->uControlTheme[4] = 139; ui15->uControlTheme[5] = 0; ui15->uControlTheme[6] = 0; ui15->uControlTheme[7] = 0; ui15->uControlTheme[8] = 0; ui15->uControlTheme[9] = 0; ui15->uControlTheme[10] = 0; ui15->uControlTheme[11] = 0; ui15->uControlTheme[12] = 0; ui15->uControlTheme[13] = 0; ui15->uControlTheme[14] = 0; ui15->uControlTheme[15] = 0; ui15->uControlTheme[16] = 0; ui15->uControlTheme[17] = 0; ui15->uControlTheme[18] = 0; ui15->uControlTheme[19] = 0; ui15->uControlTheme[20] = 0; ui15->uControlTheme[21] = 0; ui15->uControlTheme[22] = 0; ui15->uControlTheme[23] = 0; ui15->uControlTheme[24] = 0; ui15->uControlTheme[25] = 0; ui15->uControlTheme[26] = 0; ui15->uControlTheme[27] = 0; ui15->uControlTheme[28] = 0; ui15->uControlTheme[29] = 0; ui15->uControlTheme[30] = 0; ui15->uControlTheme[31] = 0; 
+	ui15->uFluxCapControl[0] = 0; ui15->uFluxCapControl[1] = 0; ui15->uFluxCapControl[2] = 0; ui15->uFluxCapControl[3] = 0; ui15->uFluxCapControl[4] = 0; ui15->uFluxCapControl[5] = 0; ui15->uFluxCapControl[6] = 0; ui15->uFluxCapControl[7] = 0; ui15->uFluxCapControl[8] = 0; ui15->uFluxCapControl[9] = 0; ui15->uFluxCapControl[10] = 0; ui15->uFluxCapControl[11] = 0; ui15->uFluxCapControl[12] = 0; ui15->uFluxCapControl[13] = 0; ui15->uFluxCapControl[14] = 0; ui15->uFluxCapControl[15] = 0; ui15->uFluxCapControl[16] = 0; ui15->uFluxCapControl[17] = 0; ui15->uFluxCapControl[18] = 0; ui15->uFluxCapControl[19] = 0; ui15->uFluxCapControl[20] = 0; ui15->uFluxCapControl[21] = 0; ui15->uFluxCapControl[22] = 0; ui15->uFluxCapControl[23] = 0; ui15->uFluxCapControl[24] = 0; ui15->uFluxCapControl[25] = 0; ui15->uFluxCapControl[26] = 0; ui15->uFluxCapControl[27] = 0; ui15->uFluxCapControl[28] = 0; ui15->uFluxCapControl[29] = 0; ui15->uFluxCapControl[30] = 0; ui15->uFluxCapControl[31] = 0; ui15->uFluxCapControl[32] = 0; ui15->uFluxCapControl[33] = 0; ui15->uFluxCapControl[34] = 0; ui15->uFluxCapControl[35] = 0; ui15->uFluxCapControl[36] = 0; ui15->uFluxCapControl[37] = 0; ui15->uFluxCapControl[38] = 0; ui15->uFluxCapControl[39] = 0; ui15->uFluxCapControl[40] = 0; ui15->uFluxCapControl[41] = 0; ui15->uFluxCapControl[42] = 0; ui15->uFluxCapControl[43] = 0; ui15->uFluxCapControl[44] = 0; ui15->uFluxCapControl[45] = 0; ui15->uFluxCapControl[46] = 0; ui15->uFluxCapControl[47] = 0; ui15->uFluxCapControl[48] = 0; ui15->uFluxCapControl[49] = 0; ui15->uFluxCapControl[50] = 0; ui15->uFluxCapControl[51] = 0; ui15->uFluxCapControl[52] = 0; ui15->uFluxCapControl[53] = 0; ui15->uFluxCapControl[54] = 0; ui15->uFluxCapControl[55] = 0; ui15->uFluxCapControl[56] = 0; ui15->uFluxCapControl[57] = 0; ui15->uFluxCapControl[58] = 0; ui15->uFluxCapControl[59] = 0; ui15->uFluxCapControl[60] = 0; ui15->uFluxCapControl[61] = 0; ui15->uFluxCapControl[62] = 0; ui15->uFluxCapControl[63] = 0; 
+	ui15->fFluxCapData[0] = 0.000000; ui15->fFluxCapData[1] = 0.000000; ui15->fFluxCapData[2] = 0.000000; ui15->fFluxCapData[3] = 0.000000; ui15->fFluxCapData[4] = 0.000000; ui15->fFluxCapData[5] = 0.000000; ui15->fFluxCapData[6] = 0.000000; ui15->fFluxCapData[7] = 0.000000; ui15->fFluxCapData[8] = 0.000000; ui15->fFluxCapData[9] = 0.000000; ui15->fFluxCapData[10] = 0.000000; ui15->fFluxCapData[11] = 0.000000; ui15->fFluxCapData[12] = 0.000000; ui15->fFluxCapData[13] = 0.000000; ui15->fFluxCapData[14] = 0.000000; ui15->fFluxCapData[15] = 0.000000; ui15->fFluxCapData[16] = 0.000000; ui15->fFluxCapData[17] = 0.000000; ui15->fFluxCapData[18] = 0.000000; ui15->fFluxCapData[19] = 0.000000; ui15->fFluxCapData[20] = 0.000000; ui15->fFluxCapData[21] = 0.000000; ui15->fFluxCapData[22] = 0.000000; ui15->fFluxCapData[23] = 0.000000; ui15->fFluxCapData[24] = 0.000000; ui15->fFluxCapData[25] = 0.000000; ui15->fFluxCapData[26] = 0.000000; ui15->fFluxCapData[27] = 0.000000; ui15->fFluxCapData[28] = 0.000000; ui15->fFluxCapData[29] = 0.000000; ui15->fFluxCapData[30] = 0.000000; ui15->fFluxCapData[31] = 0.000000; ui15->fFluxCapData[32] = 0.000000; ui15->fFluxCapData[33] = 0.000000; ui15->fFluxCapData[34] = 0.000000; ui15->fFluxCapData[35] = 0.000000; ui15->fFluxCapData[36] = 0.000000; ui15->fFluxCapData[37] = 0.000000; ui15->fFluxCapData[38] = 0.000000; ui15->fFluxCapData[39] = 0.000000; ui15->fFluxCapData[40] = 0.000000; ui15->fFluxCapData[41] = 0.000000; ui15->fFluxCapData[42] = 0.000000; ui15->fFluxCapData[43] = 0.000000; ui15->fFluxCapData[44] = 0.000000; ui15->fFluxCapData[45] = 0.000000; ui15->fFluxCapData[46] = 0.000000; ui15->fFluxCapData[47] = 0.000000; ui15->fFluxCapData[48] = 0.000000; ui15->fFluxCapData[49] = 0.000000; ui15->fFluxCapData[50] = 0.000000; ui15->fFluxCapData[51] = 0.000000; ui15->fFluxCapData[52] = 0.000000; ui15->fFluxCapData[53] = 0.000000; ui15->fFluxCapData[54] = 0.000000; ui15->fFluxCapData[55] = 0.000000; ui15->fFluxCapData[56] = 0.000000; ui15->fFluxCapData[57] = 0.000000; ui15->fFluxCapData[58] = 0.000000; ui15->fFluxCapData[59] = 0.000000; ui15->fFluxCapData[60] = 0.000000; ui15->fFluxCapData[61] = 0.000000; ui15->fFluxCapData[62] = 0.000000; ui15->fFluxCapData[63] = 0.000000; 
+	m_UIControlList.append(*ui15);
+	delete ui15;
 
 
 	m_uX_TrackPadIndex = -1;
@@ -1305,6 +1403,23 @@ bool __stdcall CModMedFilt::initUI()
 	return true;
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

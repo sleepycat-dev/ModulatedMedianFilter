@@ -3,6 +3,7 @@
 CMedianFilter::CMedianFilter(int nBufferSize)
 {
 	m_nBufferSize = nBufferSize;
+	m_nReadLimit = m_nBufferSize;
 	m_bExtModulation = false;
 	m_bPolarity = false;
 	m_nWriteIndex = 0;
@@ -76,10 +77,10 @@ float CMedianFilter::doSelectionAlgr(int nLeft,int nRight,int nMid)
 float CMedianFilter::getMedian()
 {
 	//call selection algorithm http://discuss.codechef.com/questions/1489/find-median-in-an-unsorted-array-without-sorting-it
-	if(m_nBufferSize == 1)
+	if(m_nReadLimit == 1)
 		return m_pSampleArray[0];
 
-	return doSelectionAlgr(0, m_nBufferSize, m_nBufferSize/2);
+	return doSelectionAlgr(0, m_nReadLimit, m_nReadLimit/2);
 }
 
 float CMedianFilter::getModMedian(float fModVal)
@@ -103,8 +104,31 @@ float CMedianFilter::getModMedian(float fModVal)
 		//smallest value for fModVal is -1 so bias up by 1 to 
 		//adjust into usable range. Then divide by 2 to handle
 		//largest case (1 shifted up by 1 is 2, and so is invalid)
-		int nIndex = (int)(((fModVal+1)/2)*m_nBufferSize);
+		int nIndex = (int)(((fModVal+1.0)/2.0)*m_nBufferSize);
 		return m_pSampleArray[nIndex];
+	}
+}
+
+int CMedianFilter::getModReadLimit(float fModVal)
+{
+	//safety check to make sure values are in
+	//valid range
+	if(fModVal > 1.0)
+		fModVal = 1.0;
+	else if(fModVal < -1.0)
+		fModVal = -1.0;
+
+	//unipolar case
+	if(!m_bPolarity)
+		return (int)(fModVal*m_nBufferSize);
+
+	//bipolar case
+	else
+	{
+		//smallest value for fModVal is -1 so bias up by 1 to 
+		//adjust into usable range. Then divide by 2 to handle
+		//largest case (1 shifted up by 1 is 2, and so is invalid)
+		return (int)(((fModVal+1.0)/2.0)*m_nBufferSize);
 	}
 }
 
@@ -143,8 +167,13 @@ void CMedianFilter::processAudio(float & fIn, float & fOut, float fModVal)
 	m_pSampleArray[m_nWriteIndex] = fIn;
 	float fMedian = 0.0;
 
-	if(m_bExtModulation)
+	if(m_bExtModulation && m_uModDest == read)
 		fMedian = getModMedian(fModVal);
+	if(m_bExtModulation && m_uModDest == size)
+	{
+		m_nReadLimit = getModReadLimit(fModVal);
+		fMedian = getMedian();
+	}
 	else
 		fMedian = getMedian();
 
@@ -152,7 +181,7 @@ void CMedianFilter::processAudio(float & fIn, float & fOut, float fModVal)
 	fOut = dLinTerp(0, 1, fMedian, m_fPrevOut, (float)1.0/44100.0);
 
 	m_nWriteIndex++;
-	if(m_nWriteIndex > m_nBufferSize)
+	if(m_nWriteIndex > m_nReadLimit)
 		m_nWriteIndex = 0;	
 	m_fPrevOut = fOut;
 }
@@ -171,3 +200,9 @@ void CMedianFilter::setPolarity(bool bPolarity)
 
 bool CMedianFilter::getExtModulation()
 {return m_bExtModulation;}
+
+void CMedianFilter::setReadLimit(int nReadLimit)
+{m_nReadLimit = nReadLimit;}
+
+void CMedianFilter::setModDest(UINT uModDest)
+{m_uModDest = uModDest;}

@@ -14,6 +14,8 @@
 #include "plugin.h"
 #include "MedianFilter.h"
 
+#define MAXBUFFERSIZE 64
+
 class CModMedFilt : public CPlugIn
 {
 public:
@@ -109,6 +111,9 @@ public:
 	enum{LFO,SELF};
 	float m_fMix;
 	float m_fMixModRate;
+	UINT m_uLeftLFODest;
+	enum{read,size};
+	UINT m_uRightLFODest;
 	int m_nBufferSizeRight;
 	UINT m_uWaveformRight;
 	float m_fLFORateRight;
@@ -123,6 +128,14 @@ public:
 	// ------------------------------------------------------------------------------- //
 
 };
+
+
+
+
+
+
+
+
 
 
 
