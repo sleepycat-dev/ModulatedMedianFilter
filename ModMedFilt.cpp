@@ -339,7 +339,7 @@ bool __stdcall CModMedFilt::userInterfaceChange(int nControlIndex)
 			m_LeftFilt.setExtModulation(!m_LeftFilt.getExtModulation());
 			if(m_uStereoLink)
 			{
-				m_RightFilt.setExtModulation(!m_RightFilt.getExtModulation());
+				m_RightFilt.setExtModulation(!m_LeftFilt.getExtModulation());
 				m_uDoModulateRight = m_uDoModulateLeft;
 			}
 			break;
@@ -1305,6 +1305,10 @@ bool __stdcall CModMedFilt::initUI()
 	return true;
 
 }
+
+
+
+
 
 
 
