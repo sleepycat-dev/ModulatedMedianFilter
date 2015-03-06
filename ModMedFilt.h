@@ -83,10 +83,15 @@ public:
 
 
 	// Add your code here: ----------------------------------------------------------- //
+	//Data
+	float m_fMixPct;
+	
 	//objects
 	CMedianFilter m_LeftFilt;
 	CMedianFilter m_RightFilt;
-	CWaveTable m_LFO;
+	CWaveTable m_LeftLFO;
+	CWaveTable m_RightLFO;
+	CWaveTable m_MixLFO;
 
 	//functions
 	void updateLFO();
@@ -96,19 +101,69 @@ public:
 	// ADDED BY RACKAFX -- DO NOT EDIT THIS CODE!!! ----------------------------------- //
 	//  **--0x07FD--**
 
-	int m_nBufferSize;
-	UINT m_uWaveform;
+	int m_nBufferSizeLeft;
+	UINT m_uWaveformLeft;
 	enum{sine,saw,tri,square};
-	float m_fLFORate;
-	UINT m_uModSource;
+	float m_fLFORateLeft;
+	UINT m_uModSourceLeft;
 	enum{LFO,SELF};
-	UINT m_uDoModulate;
+	float m_fMix;
+	float m_fMixModRate;
+	int m_nBufferSizeRight;
+	UINT m_uWaveformRight;
+	float m_fLFORateRight;
+	UINT m_uModSourceRight;
+	UINT m_uDoModulateLeft;
 	enum{SWITCH_OFF,SWITCH_ON};
+	UINT m_uStereoLink;
+	UINT m_uMixMod;
+	UINT m_uDoModulateRight;
 
 	// **--0x1A7F--**
 	// ------------------------------------------------------------------------------- //
 
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

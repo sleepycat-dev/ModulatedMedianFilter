@@ -168,3 +168,6 @@ void CMedianFilter::setExtModulation(bool bExtMod)
 
 void CMedianFilter::setPolarity(bool bPolarity)
 {m_bPolarity = bPolarity;}
+
+bool CMedianFilter::getExtModulation()
+{return m_bExtModulation;}

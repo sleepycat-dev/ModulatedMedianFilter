@@ -33,5 +33,6 @@ public:
 	void processAudio(float & fInput, float & fOut, float fModVal = 0.0);
 	void setBufferSize(int nBufferSize);
 	void setExtModulation(bool bExtMod);
+	bool getExtModulation();
 	void setPolarity(bool bPolarity);
 };
