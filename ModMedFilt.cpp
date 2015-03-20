@@ -1579,3 +1579,9 @@ bool __stdcall CModMedFilt::initUI()
 
 
 
+
+
+
+
+
+
